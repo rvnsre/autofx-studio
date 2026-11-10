@@ -1,40 +1,40 @@
 # AutoFX Studio 0.2.1
 
-Terminaldan avtomatik qısa montaj, prosedural SFX, yaradıcı `.cube` LUT və video redaktorlarına ötürmə.
+Automatic short-form editing, procedural SFX, creative `.cube` LUTs, and video editor handoff from the terminal.
 
-Bu layihə videoları lokal emal edir. Bulud hesabı, abunə, API açarı və ya media yükləməsi tələb etmir. İstifadəçinin nümunə videoları mənbə paketinə daxil edilməyib.
+This project processes videos locally. It does not require a cloud account, subscription, API key, or media upload. The user's reference videos are not included in the source package.
 
-## Nələr edir?
+## Features
 
-- Səhnə histogramlarından kəsim namizədləri çıxarır; analiz maksimum 2400 kiçik kadrla məhdudlaşdırılır.
-- Musiqi verilərsə enerji yüksəlişlərini tapır və kəsimləri yaxın namizədlərə uyğunlaşdırır.
-- Planı tam kadr sərhədlərində qurur: 24, 25, 30, 50 və 60 FPS.
-- Zoom/punch-in, qısa flash, sabit sürət dəyişməsi və rəng görünüşü tətbiq edir.
-- Hər kəsim üçün whoosh və impact yaradır; səslər 48 kHz WAV olaraq saxlanılır.
-- Videonu və PCM səsi ayrı render edir; AAC yalnız yekun masterdə kodlanır.
-- Paralel klip renderi, SHA-256 ilə mənbə/cache yoxlaması, atomik master yazılması və proses ləğvi təmin edir.
-- MP4 master, JSON plan/hesabat, `.cube`, WAV, FCP7 XML və AE JSX/manifest yaradır.
-- Resolve-a ayrıca yeni layihə kimi import və seçilmiş yerli presetlə native render edə bilir.
-- After Effects-də kompozisiya/AEP yaradan skript və ayrıca `aerender` əmri təqdim edir.
+- Finds cut candidates using scene histograms; analysis is limited to a maximum of 2,400 small frames.
+- Detects energy rises in optional background music and aligns cuts with nearby candidates.
+- Builds timelines on integer frame boundaries at 24, 25, 30, 50, or 60 FPS.
+- Applies zoom/punch-in, short flashes, constant playback-speed changes, and a creative color look.
+- Generates whoosh and impact sounds for cuts and saves them as 48 kHz WAV audio.
+- Renders video and PCM audio separately; AAC is encoded only in the final master.
+- Supports parallel clip rendering, SHA-256 source/cache verification, atomic master publication, and process cancellation.
+- Produces an MP4 master, JSON plan/report, `.cube` LUT, WAV audio, FCP7 XML, and AE JSX/manifest files.
+- Imports into a separate new Resolve project and can render natively using a selected installed preset.
+- Provides an After Effects composition/AEP builder and a separate `aerender` command.
 
-Bu, qaydalara əsaslanan montaj mühərrikidir. Mətn promptundan istənilən VFX səhnəsini generasiya edən model, nitqi anlayan redaktor, avtomatik rotoskopiya və ya nümunənin piksel səviyyəsində surəti deyil. Kəsimlər danışığı yarıda saxlaya bilər. Musiqi analizi musiqişünaslıq səviyyəsində beat/downbeat aşkarlanması deyil.
+This is a rules-based editing engine. It is not a model that generates arbitrary VFX scenes from text prompts, a speech-aware editor, an automatic rotoscoping system, or a pixel-perfect recreation of a reference. Cuts may interrupt speech. Music analysis is not music-theory-level beat or downbeat detection.
 
-0.2.1 auditində aşkarlanan problemlər, düzəlişlər və əvvəl/sonra test sübutları [audit hesabatında](docs/AUDIT.md) göstərilib. Mənbə və cache hash-ləri ilə yanaşı PCM faylının həqiqi məlumatı da oxunub yoxlanılır; anamorfik videonun göstərilmə nisbəti qorunur.
+The [audit report](docs/AUDIT.md) documents the issues found in the 0.2.1 audit, their fixes, and before/after test evidence. In addition to source and cache hashes, the engine reads and validates the actual PCM payload and preserves the display aspect ratio of anamorphic video.
 
-## Platformalar
+## Platforms
 
-| Hissə | Windows | Linux | macOS |
+| Component | Windows | Linux | macOS |
 |---|---|---|---|
-| CLI, FFmpeg render, LUT, SFX | Bəli | Bəli | Bəli |
-| XML/JSX fayllarının yaradılması | Bəli | Bəli | Bəli |
-| Native Resolve adapteri | Quraşdırılmış API/lisenziya tələb edir | Quraşdırılmış API/lisenziya tələb edir | Quraşdırılmış API/lisenziya tələb edir |
-| Native Adobe adapterləri | AE quraşdırılması tələb edir | Adobe native versiyası yoxdur | AE quraşdırılması tələb edir |
+| CLI, FFmpeg rendering, LUTs, SFX | Yes | Yes | Yes |
+| XML/JSX file generation | Yes | Yes | Yes |
+| Native Resolve adapter | Requires an installed API and suitable license | Requires an installed API and suitable license | Requires an installed API and suitable license |
+| Native Adobe adapters | Requires an AE installation | No native Adobe version | Requires an AE installation |
 
-Premiere üçün XML import yolu verilir; Premiere daxilində birbaşa headless idarəetmə iddia edilmir. Photoshop/Illustrator kimi video montajı ilə əlaqəsiz Adobe məhsulları bu layihənin əhatəsində deyil. Linux Resolve-da H.264 importu nəşr, versiya və codec dəstəyindən asılıdır; FFmpeg master yaradılması bundan asılı deyil.
+Premiere is supported through XML import; direct headless control of Premiere is not claimed. Adobe products unrelated to video editing, such as Photoshop and Illustrator, are outside this project's scope. H.264 import in Resolve on Linux depends on the edition, version, and codec support; creating an FFmpeg master does not depend on it.
 
-## Quraşdırma
+## Installation
 
-Python 3.10 və ya daha yenisini quraşdırın. Layihə qovluğunda:
+Install Python 3.10 or newer. From the project directory:
 
 ```console
 python -m venv .venv
@@ -54,104 +54,104 @@ Linux/macOS:
 .venv/bin/python run_autofx.py doctor
 ```
 
-Aktivləşdirilmiş virtual mühitdə aşağıdakı nümunələrdəki `python` və quraşdırılmış `autofx` əmri eyni funksiyanı yerinə yetirir. Python paketinin gətirdiyi FFmpeg istifadə edilə bilər; ayrıca ffprobe tələb edilmir. Alternativ olaraq FFmpeg-i sistem PATH-ına əlavə edin. Başqa binary seçmək üçün `AUTOFX_FFMPEG` dəyişənini həmin executable-ın tam yoluna təyin edin.
+In an activated virtual environment, the `python` examples below and the installed `autofx` command provide the same functionality. The FFmpeg binary supplied by the Python dependency can be used; a separate ffprobe installation is not required. Alternatively, add FFmpeg to your system PATH. To select another binary, set `AUTOFX_FFMPEG` to the executable's full path.
 
-## Bir əmrlə render
+## Render with one command
 
 ```console
 python run_autofx.py auto "video1.mp4" "video2.mp4" -o "renders/result.mp4" --preset hype --duration 15 --width 1080 --height 1920 --jobs 2
 ```
 
-Musiqi və bütün təsviri kəsmədən yerləşdirmək:
+Add music and fit the entire image without cropping:
 
 ```console
 python run_autofx.py auto "video.mp4" -o "renders/music.mp4" --music "music.wav" --fit contain --preset cinematic
 ```
 
-`cover` kadrı doldurmaq üçün kənarları kəsir. `contain` təsviri bütöv saxlayıb boş hissələri qara ilə doldurur. HDR/PQ/HLG mənbələr avtomatik SDR kimi rənglənmir: əvvəlcə ayrıca düzgün rəng idarəsi ilə SDR-ə çevirin. Yaradılan LUT Rec.709/display-referred yaradıcı görünüşdür; kamera LOG transformu deyil.
+`cover` crops the edges to fill the frame. `contain` preserves the entire image and fills unused space with black. HDR/PQ/HLG sources are not automatically graded as SDR: first convert them to SDR using a separate, properly color-managed workflow. The generated LUT is a Rec.709/display-referred creative look, not a camera LOG transform.
 
-Cover-art əsas video sayılmır. Birdən çox əsas video track-i olan konteynerlərdə metadata ilə renderin fərqli track seçməməsi üçün əvvəlcə istədiyiniz video track-ini ayrıca fayla remux edin; belə konteynerlər aydın xəta ilə rədd olunur.
+Cover art is not treated as the primary video. For containers with multiple primary video tracks, remux your chosen track into a separate file first. Such containers are rejected with a clear error to prevent metadata inspection and rendering from selecting different tracks.
 
-## Planı redaktə etmək və davam etmək
+## Edit a plan and resume rendering
 
 ```console
 python run_autofx.py plan "video.mp4" -o "edit.json" --duration 12 --no-analyze
 python run_autofx.py render "edit.json" -o "renders/edit.mp4"
 ```
 
-JSON daxilində `clips` siyahısındakı `in`, `speed`, `zoom`, `flash` dəyişilə bilər. `timeline_frame` və `frames` kəsimsiz, üst-üstə düşməyən timeline təşkil etməlidir. Köhnə 0.1 planları dəstəklənmir; schema 2 planını yenidən yaradın.
+You can edit `in`, `speed`, `zoom`, and `flash` in the JSON `clips` list. The `timeline_frame` and `frames` values must form a continuous timeline with no gaps or overlaps. Old 0.1 plans are unsupported; regenerate them using schema 2.
 
-Eyni əmri təkrarlayanda tamamlanmış və hash-i uyğun kliplər yenidən istifadə olunur. Mövcud master üçün `--overwrite` lazımdır. Mənbə dəyişibsə planı yenidən yaradın. Elektrik kəsilməsindən qalan `.autofx.lock` faylını yalnız həmin çıxış üçün renderin işləmədiyini yoxladıqdan sonra əl ilə silin. Proqram başqa prosesin kilidini avtomatik silmir.
+Repeating the same command reuses completed clips whose hashes match. Replacing an existing master requires `--overwrite`. If a source changes, regenerate the plan. Remove a stale `.autofx.lock` left by a power failure only after confirming that no render is running for that output. The program does not automatically delete another process's lock.
 
-## Sürət və GPU
+## Performance and GPU encoding
 
-`--encoder cpu` standart, daha geniş uyğun variantdır. İstəyə görə `nvenc`, `qsv`, `amf`, `videotoolbox` seçilə bilər. `doctor` yalnız FFmpeg build-də encoderin olduğunu göstərir; GPU/driver işləkliyini sübut etmir. Uyğunsuz GPU xətası gizlədilmir və səssiz CPU keçidi edilmir.
+`--encoder cpu` is the default and most broadly compatible option. You can also select `nvenc`, `qsv`, `amf`, or `videotoolbox`. `doctor` reports whether an encoder is compiled into FFmpeg; it does not prove that a compatible GPU and driver are available. GPU errors are reported rather than hidden, and there is no silent fallback to CPU encoding.
 
-Filtrlər, histogram analizi və zoom CPU-da işləyir. GPU seçimi video kodlayıcısını dəyişir. Sürət mənbə codec-i, disk, kadr ölçüsü və avadanlıqdan asılıdır; sabit real-time vədi verilmir. `--jobs` 1–8 arasında qəbul edilir; yüksək ölçüdə yaddaş üçün 1–2 seçin. `--skip-decode-check` əlavə tam decode yoxlamasını söndürür; kadr sayı, PCM uzunluğu və mənbə hash-ləri yenə yoxlanılır.
+Filters, histogram analysis, and zoom run on the CPU. Selecting a GPU encoder changes video encoding only. Performance depends on the source codec, storage, frame size, and hardware; consistent real-time performance is not promised. `--jobs` accepts values from 1 to 8; use 1 or 2 at high resolutions to limit memory use. `--skip-decode-check` disables the additional full decode pass; frame counts, PCM lengths, and source hashes are still checked.
 
-## Çıxışlar
+## Outputs
 
-Masterin yanında `result_assets/<hash>/` yaranır:
+The engine creates `result_assets/<hash>/` beside the master:
 
-| Fayl | Məqsəd |
+| File | Purpose |
 |---|---|
-| `plan.json` | Dəqiq montaj planı və mənbə kimlikləri |
-| `report.json` | Master hash-i, müddət, render vaxtı, çıxış yolları |
-| `clip_*.mov` | Effektləri tətbiq edilmiş ayrıca video klipləri |
-| `clip_*.wav` | Klipə uyğun, dəqiq nümunə saylı PCM səsi |
-| `source_audio.wav` | Kəsimlər üzrə yığılmış ilkin səs |
-| `sfx.wav` | Ayrı whoosh/impact stem-i |
-| `look.cube` | Yaradıcı LUT |
-| `timeline.xml` | Premiere/Resolve üçün kəsim timeline-ı |
-| `after_effects.json` | AE import manifesti |
-| `build_after_effects.jsx` | AE kompozisiya skripti |
+| `plan.json` | Exact edit plan and source identities |
+| `report.json` | Master hash, duration, render time, and output paths |
+| `clip_*.mov` | Separate video clips with effects applied |
+| `clip_*.wav` | PCM audio with an exact sample count for each clip |
+| `source_audio.wav` | Original audio assembled across the cuts |
+| `sfx.wav` | Separate whoosh/impact stem |
+| `look.cube` | Creative LUT |
+| `timeline.xml` | Cut timeline for Premiere/Resolve |
+| `after_effects.json` | AE import manifest |
+| `build_after_effects.jsx` | AE composition builder script |
 
-XML/AE-də video klipləri ayrıdır, effektlər həmin kliplərə tətbiq olunub; native, parametrik VFX node-ları kimi ötürülmür. Timeline audio-su yekun masterdən götürülür. Bütün media qovluğunu masterlə birlikdə saxlayın; faylları köçürəndə redaktorda relink lazım ola bilər. Source hash-lər mütləq fayl yolları ilə saxlanılır; public repo-ya media/plan/hesabatları yoxlamadan əlavə etməyin.
+XML/AE handoff keeps video clips separate, with effects baked into those clips; effects are not transferred as native, parametric VFX nodes. Timeline audio comes from the completed master. Keep the entire media folder together with the master; moving files may require relinking in your editor. Source identities include absolute file paths. Review media, plans, and reports before adding them to a public repository.
 
 ## Resolve
 
-Resolve-u başladın və quraşdırılmış nəşrin xarici scripting dəstəyini hazırlayın. Lazım gələrsə `RESOLVE_SCRIPT_API` və `RESOLVE_SCRIPT_LIB` dəyişənlərini vendor README-sinə uyğun qurun.
+Start Resolve and prepare external scripting support in your installed edition. If needed, configure `RESOLVE_SCRIPT_API` and `RESOLVE_SCRIPT_LIB` according to the vendor's README.
 
 ```console
 python run_autofx.py resolve "renders/result_assets/HASH/timeline.xml"
 python run_autofx.py resolve "renders/result_assets/HASH/timeline.xml" --render-dir "native-render" --render-preset "MyInstalledPreset"
 ```
 
-Yeni unikal layihə yaradılır. Native rendering üçün mövcud render presetinin dəqiq adı lazımdır. Komanda lisenziya və tətbiqdə icazə parametrlərini dəyişmir.
+A new project with a unique name is created. Native rendering requires the exact name of an installed render preset. The command does not change licensing or application permission settings.
 
 ## After Effects
 
-AE-də boş layihə açın. Fayla yazmağa icazə verən scripting ayarları quraşdırılmış tətbiqdə hazır olmalıdır. Məsələn Windows-da öz versiyanızın executable yolunu göstərin:
+Open an empty AE project. The installed application must already allow scripts to write files. On Windows, for example, supply the executable path for your installed version:
 
-AE manifestində nisbi media və layihə yolları manifestin qovluğuna görə həll olunur. `--project` ilə verilən ayrıca çıxış yolu isə terminalın cari qovluğuna görə həll olunur. Native `aerender` yarımçıq nəticəni əsas çıxış adı ilə saxlamır; tamamlanmış staging faylı sonda yayımlanır.
+Relative media and project paths in the AE manifest are resolved against the manifest directory. An explicit `--project` output path is resolved against the terminal's current directory. Native `aerender` does not save a partial result under the final output name; the completed staging file is published at the end.
 
 ```console
 python run_autofx.py after-effects "renders/result_assets/HASH/after_effects.json" --exe "C:/Program Files/Adobe/Adobe After Effects 2025/Support Files/AfterFX.exe" --project "renders/native.aep"
 ```
 
-macOS-da `--exe` tətbiqin `.app/Contents/MacOS/` daxilindəki uyğun executable yoludur. Mövcud media olan AE layihəsinə toxunmaqdan imtina edilir. Mövcud `.aep` əvəz edilmir. Launcher-in çıxmasını gözləmək əvəzinə skriptin nəticə bildirişi izlənir.
+On macOS, `--exe` is the path to the appropriate executable inside the application's `.app/Contents/MacOS/` directory. The adapter refuses to modify an AE project that already contains media. An existing `.aep` is not replaced. The adapter waits for the script's acknowledgment instead of waiting for the GUI launcher to exit.
 
 ```console
 python run_autofx.py aerender "renders/native.aep" --exe "/your/path/to/aerender" -o "renders/native.mov" --template "Your installed output module template"
 ```
 
-Template adı AE quraşdırılmasına və dilinə uyğun olmalıdır. Çıxış formatı/uzantısı həmin template-lə uyğun seçilməlidir. Native tətbiqlər və adapterlər üçün ayrıca quraşdırılmış proqram/lisenziya tələb olunur.
+The template name must match your AE installation and language. Choose an output format and extension compatible with that template. Native applications and adapters require separately installed software and suitable licenses.
 
-## Yoxlamalar
+## Testing
 
-Tam test dəstini bir əmrlə başladıb maşın tərəfindən oxunan hesabat saxlamaq:
+Run the complete test suite and save a machine-readable report with one command:
 
 ```console
 python tools/check.py --integration --report validation.json
 ```
 
-Test temp qovluğunu ayrıca seçmək üçün `--temp-dir ./test-work` əlavə edin.
+Add `--temp-dir ./test-work` to choose a separate temporary directory for tests.
 
 ```console
 python -m unittest discover -s tests -v
 ```
 
-Sintetik video yaradan real render testləri üçün:
+To enable real rendering tests that generate synthetic videos:
 
 Windows PowerShell:
 
@@ -166,19 +166,19 @@ Linux/macOS:
 AUTOFX_INTEGRATION=1 python -m unittest discover -s tests -v
 ```
 
-Unit testləri planların pozulması, NaN/Infinity, hash, kilid, proses vaxt limiti, audio tempo, LUT, SFX və XML-i yoxlayır. İnteqrasiya testləri qarışıq FPS, səssiz/səsli mənbə, Unicode/boşluqlu yol, musiqi, cache və korlanmış klipin bərpasını yoxlayır. CI üç OS üçün nəzərdə tutulub; CI faylının mövcudluğu həmin platformaların bu lokal sessiyada sınaqdan keçirildiyi demək deyil. Yerli faktiki nəticələr `VALIDATION.md` faylındadır.
+Unit tests cover invalid plans, NaN/Infinity, hashes, locks, process timeouts, audio tempo, LUTs, SFX, and XML. Integration tests cover mixed frame rates, silent and audio-bearing sources, Unicode paths and spaces, music, caching, and recovery from a damaged cached clip. CI is configured for three operating systems; the existence of a CI configuration alone does not prove those platforms were tested in the local session. Actual local results are recorded in `VALIDATION.md`.
 
-## Məhdudiyyətlər
+## Limitations
 
-- Çıxış müddəti: 0.2–600 saniyə; 1–128 mənbə; maksimum 4096 klip.
-- Sadə enerji analizi, qaydalara əsaslanan montaj və sabit sürət dəyişməsi var; generativ VFX, semantik kəsim və speed-ramp əyriləri yoxdur.
-- HDR, kamera LOG, çoxkanallı professional audio və subframe timecode üçün ayrıca uyğun iş axını lazımdır.
-- Native Resolve/Adobe davranışı quraşdırılmış tətbiq versiyası, edition, media codec-ləri və icazələrdən asılıdır.
-- FFmpeg/numpy/OpenCV ayrıca layihələrdir; onların lisenziyaları özlərinə aiddir. Bu source paketə FFmpeg binary-si daxil edilmir.
+- Output duration: 0.2-600 seconds; 1-128 sources; at most 4,096 clips.
+- The engine provides simple energy analysis, rules-based editing, and constant playback-speed changes. It does not provide generative VFX, semantic editing, or speed-ramp curves.
+- HDR, camera LOG, professional multichannel audio, and subframe timecode require a separate suitable workflow.
+- Native Resolve/Adobe behavior depends on the installed application version, edition, media codecs, and permissions.
+- FFmpeg, NumPy, and OpenCV are separate projects with their own licenses. No FFmpeg binary is included in this source package.
 
-## Rəsmi istinadlar
+## Official references
 
 - [After Effects scripting](https://developer.adobe.com/after-effects/)
 - [Adobe automated rendering](https://helpx.adobe.com/after-effects/desktop/render-and-export/automate-rendering/automated-rendering-network-rendering.html)
 - [FFmpeg filters](https://ffmpeg.org/ffmpeg-filters.html)
-- Resolve scripting üçün quraşdırılmış məhsulun `Developer/Scripting/README.txt` sənədi əsasdır.
+- For Resolve scripting, refer to `Developer/Scripting/README.txt` in your installed product.
