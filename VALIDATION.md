@@ -6,7 +6,7 @@ Tarix: 10 noyabr 2026.
 
 - Python mənbələrinin compile yoxlaması: keçdi.
 - CLI giriş nöqtəsi və `doctor`: keçdi.
-- 28 unittest: keçdi; 0 xəta, 0 uğursuz test, 0 buraxılmış test.
+- 43 unittest: keçdi; 0 xəta, 0 uğursuz test, 0 buraxılmış test.
 - Sintetik video ilə real FFmpeg inteqrasiya testləri: keçdi.
 - Audio və səssiz mənbələrin qarışdırılması: keçdi.
 - 24, 25, 30, 50 və 60 FPS çıxışlar: keçdi.
@@ -32,7 +32,7 @@ Maşın tərəfindən oxunan nəticə: `validation.json`.
 - OpenCV 5.0.0.
 - NumPy 2.4.6.
 - FFmpeg 7.1 essentials build.
-- Son test dəstinin ümumi müddəti təxminən 13.2 saniyə idi; bu, render sürəti üçün universal benchmark deyil.
+- Son test dəstinin ümumi müddəti təxminən 21.2 saniyə idi; bu, render sürəti üçün universal benchmark deyil.
 
 ## Bu sessiyada yoxlanılmayan hissələr
 

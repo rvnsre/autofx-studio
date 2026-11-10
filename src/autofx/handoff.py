@@ -6,6 +6,8 @@ from pathlib import Path
 import xml.etree.ElementTree as ET
 
 from .media import absolute_path, atomic_bytes, write_json
+from .media import FXError
+from .plan import validate
 
 
 def node(parent, tag, value=None):
@@ -16,6 +18,9 @@ def node(parent, tag, value=None):
 
 
 def export(plan: dict, clips: list[Path], folder: Path, master: Path) -> dict:
+    validate(plan)
+    if len(clips) != len(plan["clips"]):
+        raise FXError("Handoff clip count does not match the validated timeline")
     root = ET.Element("xmeml", version="5")
     sequence = node(root, "sequence")
     sequence.set("id", "autofx-sequence")

@@ -10,7 +10,8 @@ import time
 import uuid
 
 from .handoff import build_jsx
-from .media import FXError, Runner, absolute_path, atomic_bytes, read_json
+from .media import (FXError, Runner, absolute_path, atomic_bytes, publish_file, read_json,
+                    temporary_directory)
 from .plan import integer, number
 
 
@@ -82,6 +83,8 @@ def after_effects(manifest: Path, executable: Path, *, project: Path | None = No
     number(timeout, .1, 86400, "Timeout")
     if sys.platform not in ("win32", "darwin"):
         raise FXError("Native After Effects is supported on Windows and macOS only")
+    manifest = absolute_path(manifest, strict=True)
+    folder = manifest.parent
     payload = read_json(manifest)
     for key in ("master", "project", "clips", "fps", "width", "height", "duration", "name"):
         if key not in payload:
@@ -89,6 +92,8 @@ def after_effects(manifest: Path, executable: Path, *, project: Path | None = No
     for key in ("master", "project"):
         if not isinstance(payload[key], str) or not payload[key]:
             raise FXError(f"AE {key} path must be a nonempty string")
+        candidate = Path(payload[key]).expanduser()
+        payload[key] = str(absolute_path(candidate if candidate.is_absolute() else folder / candidate))
     if not isinstance(payload["name"], str) or not payload["name"]:
         raise FXError("AE composition name must be a nonempty string")
     number(payload["duration"], .01, 600, "AE duration")
@@ -97,24 +102,27 @@ def after_effects(manifest: Path, executable: Path, *, project: Path | None = No
         integer(payload[key], 64, 4096, f"AE {key}")
     if not isinstance(payload["clips"], list) or not 1 <= len(payload["clips"]) <= 4096:
         raise FXError("AE manifest must contain 1–4096 clips")
-    absolute_path(Path(payload["master"]), strict=True)
+    if not Path(payload["master"]).is_file():
+        raise FXError("AE master media is missing or is not a regular file")
     for clip in payload["clips"]:
         if not isinstance(clip, dict) or not isinstance(clip.get("path"), str):
             raise FXError("Invalid AE clip")
-        absolute_path(Path(clip["path"]), strict=True)
+        candidate = Path(clip["path"]).expanduser()
+        clip["path"] = str(absolute_path(candidate if candidate.is_absolute() else folder / candidate))
+        if not Path(clip["path"]).is_file():
+            raise FXError(f"AE clip media is missing: {clip['path']}")
         number(clip.get("start"), 0, payload["duration"], "AE clip start")
         length = number(clip.get("duration"), .001, 600, "AE clip duration")
         if clip["start"] + length > payload["duration"] + .000001:
             raise FXError("AE clip extends beyond the composition")
     if project:
-        payload["project"] = str(project.resolve())
+        payload["project"] = str(absolute_path(project))
     target = Path(payload["project"])
     if target.suffix.lower() != ".aep" or target.exists():
         raise FXError("Choose a new .aep output path")
     target.parent.mkdir(parents=True, exist_ok=True)
-    executable = executable.resolve(strict=True)
+    executable = absolute_path(executable, strict=True)
     token = uuid.uuid4().hex
-    folder = manifest.resolve().parent
     status_file = folder / f"ae_status_{token}.txt"
     script = folder / f"ae_launch_{token}.jsx"
     atomic_bytes(script, build_jsx(payload, status_file).encode("utf-8"))
@@ -145,10 +153,15 @@ def aerender(executable: Path, project: Path, output: Path, template: str,
         raise FXError("Native Adobe rendering requires Windows or macOS")
     if output.exists():
         raise FXError("Adobe output exists; select a new filename")
-    output = output.resolve()
+    output = absolute_path(output)
     output.parent.mkdir(parents=True, exist_ok=True)
-    Runner()([str(executable.resolve(strict=True)), "-project", str(project.resolve(strict=True)),
-              "-comp", comp, "-OMtemplate", template, "-output", str(output)], timeout=timeout)
-    if not output.is_file() or output.stat().st_size == 0:
-        raise FXError("aerender returned without a nonempty output file")
+    executable = absolute_path(executable, strict=True)
+    project = absolute_path(project, strict=True)
+    with temporary_directory(output.parent) as staging:
+        staged = staging / output.name
+        Runner()([str(executable), "-project", str(project), "-comp", comp,
+                  "-OMtemplate", template, "-output", str(staged)], timeout=timeout)
+        if not staged.is_file() or staged.stat().st_size == 0:
+            raise FXError("aerender returned without a nonempty output file")
+        publish_file(staged, output)
     return output

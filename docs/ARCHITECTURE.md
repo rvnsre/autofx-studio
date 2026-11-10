@@ -42,10 +42,16 @@ This avoids accumulating AAC priming at every editorial cut. Original audio gain
 6. Rebuild partial or damaged clips. Completion manifests are written after validated outputs are renamed.
 7. Assemble the master in a staging directory on the destination filesystem.
 8. Validate master frame count/dimensions; decode it unless explicitly disabled.
-9. Check source metadata again, then replace the requested output.
-10. Export handoff metadata and report.
+9. Export handoff metadata before replacing any existing master.
+10. Verify the full source/music identities again, including SHA-256.
+11. Publish with an atomic exclusive operation unless overwrite was explicitly requested.
+12. Save the publication report.
 
-If handoff export fails after master publication, the CLI reports the failure even though the master is present. A subsequent render with `--overwrite` reuses cached clips and retries export. An OS crash can leave a stale lock or staging directory. The application does not guess that another process is dead and delete its lock.
+Handoff export failure leaves an existing master untouched. Report writing happens after publication; a disk failure during report writing can still leave a completed master without an updated report. This is not a multi-file filesystem transaction. A subsequent render with `--overwrite` reuses cached clips and retries export/report writing. An OS crash can leave a stale lock or staging directory. The application does not guess that another process is dead and delete its lock.
+
+No-overwrite publication does not use an existence check followed by a replacing rename. Windows uses its non-replacing rename; POSIX uses an exclusive hard link followed by removal of the staging name. The latter requires hard-link support on the destination filesystem. Staging is on that same filesystem. The overwrite path uses atomic replace.
+
+PCM validation reads the declared sample payload in bounded chunks so a valid WAV header cannot conceal truncation. Cache manifests record whether decoding was verified. A later verified render decodes any previously unchecked cached clips and upgrades that record without reencoding valid media.
 
 Worker failures set a shared cancellation event, cancel pending futures and cause running FFmpeg processes to be killed and reaped by their own runner. A keyboard interrupt follows the same path. Processes are launched with argument arrays and no shell; user paths are not interpolated into shell commands or FFmpeg filter strings. Filters refer only to generated simple cache-relative filenames.
 
@@ -56,6 +62,8 @@ XML carries individually rendered video cuts and the finished stereo master mix.
 The Resolve adapter creates a uniquely named new project and checks import/save results. Native rendering requires an explicitly named installed render preset. On timeout/interruption it stops the render it started.
 
 The AE adapter requires an empty existing project, refuses to replace an AEP, and waits for a unique status file produced by JSX rather than waiting for the GUI process to close. JSON serialization escapes path/string data. The app's scripting file-access settings must already permit the operation. The adapter does not change security settings, licenses or permissions.
+
+Relative manifest media/project paths are normalized against the manifest directory before script generation. The explicit CLI project override uses the caller's working directory. Native aerender output is staged with the chosen filename extension and published only after a successful process exit and nonempty-file check.
 
 ## Tests and limits of evidence
 

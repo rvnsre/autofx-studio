@@ -1,18 +1,18 @@
 {
   "success": true,
-  "tests_run": 28,
+  "tests_run": 43,
   "failures": 0,
   "errors": 0,
   "skipped": [],
   "integration_requested": true,
-  "elapsed_seconds": 13.187,
+  "elapsed_seconds": 21.235,
   "python": "3.11.9",
   "platform": "Windows-10-10.0.26100-SP0",
   "native_applications_verified": false,
   "dependencies": {
     "opencv": "5.0.0",
     "numpy": "2.4.6",
-    "autofx": "0.2.0"
+    "autofx": "0.2.1"
   },
   "ffmpeg_version": "ffmpeg version 7.1-essentials_build-www.gyan.dev Copyright (c) 2000-2024 the FFmpeg developers"
 }

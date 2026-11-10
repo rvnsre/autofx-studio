@@ -5,6 +5,7 @@ import os
 from pathlib import Path
 import unittest
 import wave
+from unittest.mock import patch
 
 from autofx.media import (FXError, decode_check, ffmpeg, inspect, read_json, run,
                           temporary_directory)
@@ -63,6 +64,71 @@ class IntegrationTests(unittest.TestCase):
                               fps=fps, analyze=False, preset="cinematic")
                 report = render(plan, self.root / f"fps{fps}.mp4", jobs=1)
                 self.assertEqual(inspect(Path(report["master"]), identity=False)["frames"], round(.3 * fps))
+
+    def test_anamorphic_contain_preserves_display_aspect(self):
+        import cv2
+        source = self.root / "anamorphic.mp4"
+        run([ffmpeg(), "-v", "error", "-nostdin", "-y", "-f", "lavfi", "-i",
+             "color=c=green:size=100x100:rate=30,drawbox=x=30:y=30:w=40:h=40:color=red:t=fill,setsar=2/1",
+             "-t", "1", "-c:v", "libx264", str(source)])
+        plan = create([source], duration=.3, width=200, height=200,
+                      fit="contain", preset="clean", analyze=False)
+        for clip in plan["clips"]:
+            clip["zoom"] = 0.
+        report = render(plan, self.root / "anamorphic_out.mp4", jobs=1)
+        cap = cv2.VideoCapture(report["master"])
+        try:
+            ok, frame = cap.read()
+        finally:
+            cap.release()
+        self.assertTrue(ok)
+        self.assertLess(float(frame[10, 100].mean()), 10., "Expected top letterbox for 2:1 DAR")
+        red = (frame[:, :, 2] > 170) & (frame[:, :, 1] < 80)
+        ys, xs = red.nonzero()
+        self.assertGreater(len(xs), 100)
+        self.assertAlmostEqual((xs.max() - xs.min() + 1) / (ys.max() - ys.min() + 1), 2., delta=.15)
+
+    def test_handoff_failure_preserves_existing_master(self):
+        output = self.root / "export_failure.mp4"
+        output.write_bytes(b"previous master")
+        plan = create([self.a], duration=.2, width=128, height=128, analyze=False)
+        with patch("autofx.handoff.export", side_effect=FXError("Simulated export failure")), \
+                self.assertRaises(FXError):
+            render(plan, output, jobs=1, overwrite=True)
+        self.assertEqual(output.read_bytes(), b"previous master")
+
+    def test_source_mutation_with_restored_timestamp_prevents_publication(self):
+        from autofx.handoff import export as real_export
+        source = self.root / "mutable.mp4"
+        source.write_bytes(self.a.read_bytes())
+        plan = create([source], duration=.2, width=128, height=128, analyze=False)
+        before = source.stat()
+        output = self.root / "mutation.mp4"
+
+        def mutate(*args):
+            result = real_export(*args)
+            data = bytearray(source.read_bytes())
+            data[-1] ^= 1
+            source.write_bytes(data)
+            os.utime(source, ns=(before.st_atime_ns, before.st_mtime_ns))
+            return result
+
+        with patch("autofx.handoff.export", side_effect=mutate), self.assertRaises(FXError):
+            render(plan, output, jobs=1)
+        self.assertFalse(output.exists())
+
+    def test_cache_decode_verification_is_upgraded_without_reencoding(self):
+        plan = create([self.a], duration=.2, width=128, height=128, analyze=False)
+        output = self.root / "upgrade.mp4"
+        report = render(plan, output, jobs=1, verify_decode=False)
+        folder = Path(report["assets"])
+        clip = folder / "clip_00000.mov"
+        marker = folder / "clip_00000.json"
+        before = clip.stat().st_mtime_ns
+        self.assertFalse(read_json(marker)["decode_verified"])
+        render(plan, output, jobs=1, overwrite=True, verify_decode=True)
+        self.assertTrue(read_json(marker)["decode_verified"])
+        self.assertEqual(clip.stat().st_mtime_ns, before)
 
 
 if __name__ == "__main__":

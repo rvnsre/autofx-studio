@@ -56,13 +56,13 @@ def ffmpeg() -> str:
     if override:
         candidate = shutil.which(override)
         if not candidate and Path(override).is_file():
-            candidate = str(Path(override).resolve())
+            candidate = str(absolute_path(Path(override)))
         if not candidate:
             raise FXError("AUTOFX_FFMPEG must identify an existing executable")
-        return candidate
+        return str(absolute_path(Path(candidate)))
     system = shutil.which("ffmpeg")
     if system:
-        return system
+        return str(absolute_path(Path(system)))
     try:
         import imageio_ffmpeg
         return imageio_ffmpeg.get_ffmpeg_exe()
@@ -81,7 +81,11 @@ class Runner:
 
     def __call__(self, args: list[str], *, cwd: Path | None = None,
                  timeout: float = 1800, check: bool = True) -> tuple[bytes, bytes]:
-        if not args or not isinstance(timeout, (int, float)) or not math.isfinite(timeout) or timeout <= 0:
+        try:
+            valid_timeout = type(timeout) in (int, float) and math.isfinite(timeout) and timeout > 0
+        except OverflowError:
+            valid_timeout = False
+        if not args or isinstance(args, (str, bytes)) or not valid_timeout:
             raise FXError("Process arguments and a positive finite timeout are required")
         if self.cancelled.is_set():
             raise FXError("Operation cancelled")
@@ -135,6 +139,25 @@ def atomic_bytes(path: Path, content: bytes) -> None:
         temporary.unlink(missing_ok=True)
 
 
+def publish_file(staged: Path, target: Path, *, overwrite: bool = False) -> None:
+    """Atomically publish on the destination filesystem, without a check/replace race.
+
+    POSIX rename replaces existing files, so use an exclusive hard link there.
+    Windows rename already fails when its destination exists. Staging must be on
+    the same filesystem; callers put it under the destination parent.
+    """
+    try:
+        if overwrite:
+            os.replace(staged, target)
+        elif os.name == "nt":
+            os.rename(staged, target)
+        else:
+            os.link(staged, target)
+            staged.unlink()
+    except FileExistsError as exc:
+        raise FXError(f"Output already exists; preserved: {target}") from exc
+
+
 def write_json(path: Path, value: object) -> None:
     atomic_bytes(path, (json.dumps(value, indent=2, ensure_ascii=False,
                                   allow_nan=False) + "\n").encode("utf-8"))
@@ -182,15 +205,22 @@ def stream_details(path: Path) -> dict:
     _, stderr = Runner()([ffmpeg(), "-hide_banner", "-nostdin", "-i", str(path)],
                          timeout=60, check=False)
     text = stderr.decode("utf-8", "replace")
-    videos = re.findall(r"Stream #0:(\d+)[^\n]*: Video:", text)
+    videos = [(int(match.group(1)), line) for line in text.splitlines()
+              if (match := re.search(r"Stream #0:(\d+)[^\n]*: Video:", line))
+              and "attached pic" not in line.lower()]
     audios = re.findall(r"Stream #0:(\d+)[^\n]*: Audio:", text)
-    return {"video_stream": int(videos[0]) if videos else None,
+    if len(videos) > 1:
+        raise FXError("Multiple video streams are unsupported; remux the chosen track first")
+    return {"video_stream": videos[0][0] if videos else None,
             "audio_stream": int(audios[0]) if audios else None,
-            "hdr": bool(re.search(r"smpte2084|arib-std-b67", text))}
+            "hdr": bool(videos and re.search(r"smpte2084|arib-std-b67", videos[0][1]))}
 
 
 def inspect(path: Path, *, identity: bool = True) -> dict:
     path = absolute_path(path, strict=True)
+    details = stream_details(path)
+    if details["video_stream"] is None:
+        raise FXError(f"No primary video stream found: {path}")
     cap = cv2.VideoCapture(str(path))
     try:
         fps, count = cap.get(cv2.CAP_PROP_FPS), cap.get(cv2.CAP_PROP_FRAME_COUNT)
@@ -203,9 +233,7 @@ def inspect(path: Path, *, identity: bool = True) -> dict:
                   "duration": count / fps, "width": width, "height": height}
     finally:
         cap.release()
-    result.update(stream_details(path))
-    if result["video_stream"] is None:
-        raise FXError(f"No video stream found: {path}")
+    result.update(details)
     if identity:
         result.update(fingerprint(path))
     return result

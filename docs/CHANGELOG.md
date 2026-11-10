@@ -1,3 +1,18 @@
+# 0.2.1
+
+- Preserve display aspect ratio for anamorphic sources in cover/contain filters.
+- Validate WAV payload length, not only its header; report malformed/truncated containers clearly.
+- Resolve relative FFmpeg executable paths before worker subprocesses change directory.
+- Ignore cover-art video streams and reject ambiguous multiple-primary-video inputs.
+- Reject boolean and overflowing process timeouts without leaking a traceback.
+- Anchor AE manifest-relative paths and consistently normalize native executable paths.
+- Stage native aerender output so failures leave no partially published destination.
+- Prepare handoff before master publication and verify source hashes again afterward.
+- Atomically preserve competing writers when overwrite was not requested.
+- Upgrade cached decode verification and reject handoff clip-count mismatches.
+- Invalidate old renderer caches through the patch version; use current SPDX package metadata.
+- Expand local tests from 28 to 43, including real anamorphic and failure-path renders.
+
 # 0.2.0
 
 - Name the source launcher `run_autofx.py` so it does not mask the installed `autofx` package; cover editable-style import lookup in subprocess regression tests.

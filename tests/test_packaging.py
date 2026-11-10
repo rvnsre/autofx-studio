@@ -5,6 +5,8 @@ import subprocess
 import sys
 import unittest
 
+from autofx import __version__
+
 ROOT = Path(__file__).resolve().parents[1]
 
 
@@ -18,13 +20,13 @@ class PackagingTests(unittest.TestCase):
         result = subprocess.run([sys.executable, "-c", code], cwd=ROOT,
                                 env=environment, capture_output=True, text=True, timeout=30)
         self.assertEqual(result.returncode, 0, result.stderr)
-        self.assertEqual(result.stdout.strip(), "0.2.0")
+        self.assertEqual(result.stdout.strip(), __version__)
 
     def test_source_launcher_from_checkout(self):
         result = subprocess.run([sys.executable, "run_autofx.py", "--version"], cwd=ROOT,
                                 capture_output=True, text=True, timeout=30)
         self.assertEqual(result.returncode, 0, result.stderr)
-        self.assertEqual(result.stdout.strip(), "0.2.0")
+        self.assertEqual(result.stdout.strip(), __version__)
 
 
 if __name__ == "__main__":

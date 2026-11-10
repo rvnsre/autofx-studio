@@ -1,4 +1,4 @@
-# AutoFX Studio 0.2
+# AutoFX Studio 0.2.1
 
 Terminaldan avtomatik qısa montaj, prosedural SFX, yaradıcı `.cube` LUT və video redaktorlarına ötürmə.
 
@@ -18,6 +18,8 @@ Bu layihə videoları lokal emal edir. Bulud hesabı, abunə, API açarı və ya
 - After Effects-də kompozisiya/AEP yaradan skript və ayrıca `aerender` əmri təqdim edir.
 
 Bu, qaydalara əsaslanan montaj mühərrikidir. Mətn promptundan istənilən VFX səhnəsini generasiya edən model, nitqi anlayan redaktor, avtomatik rotoskopiya və ya nümunənin piksel səviyyəsində surəti deyil. Kəsimlər danışığı yarıda saxlaya bilər. Musiqi analizi musiqişünaslıq səviyyəsində beat/downbeat aşkarlanması deyil.
+
+0.2.1 auditində aşkarlanan problemlər, düzəlişlər və əvvəl/sonra test sübutları [audit hesabatında](docs/AUDIT.md) göstərilib. Mənbə və cache hash-ləri ilə yanaşı PCM faylının həqiqi məlumatı da oxunub yoxlanılır; anamorfik videonun göstərilmə nisbəti qorunur.
 
 ## Platformalar
 
@@ -67,6 +69,8 @@ python run_autofx.py auto "video.mp4" -o "renders/music.mp4" --music "music.wav"
 ```
 
 `cover` kadrı doldurmaq üçün kənarları kəsir. `contain` təsviri bütöv saxlayıb boş hissələri qara ilə doldurur. HDR/PQ/HLG mənbələr avtomatik SDR kimi rənglənmir: əvvəlcə ayrıca düzgün rəng idarəsi ilə SDR-ə çevirin. Yaradılan LUT Rec.709/display-referred yaradıcı görünüşdür; kamera LOG transformu deyil.
+
+Cover-art əsas video sayılmır. Birdən çox əsas video track-i olan konteynerlərdə metadata ilə renderin fərqli track seçməməsi üçün əvvəlcə istədiyiniz video track-ini ayrıca fayla remux edin; belə konteynerlər aydın xəta ilə rədd olunur.
 
 ## Planı redaktə etmək və davam etmək
 
@@ -118,6 +122,8 @@ Yeni unikal layihə yaradılır. Native rendering üçün mövcud render preseti
 ## After Effects
 
 AE-də boş layihə açın. Fayla yazmağa icazə verən scripting ayarları quraşdırılmış tətbiqdə hazır olmalıdır. Məsələn Windows-da öz versiyanızın executable yolunu göstərin:
+
+AE manifestində nisbi media və layihə yolları manifestin qovluğuna görə həll olunur. `--project` ilə verilən ayrıca çıxış yolu isə terminalın cari qovluğuna görə həll olunur. Native `aerender` yarımçıq nəticəni əsas çıxış adı ilə saxlamır; tamamlanmış staging faylı sonda yayımlanır.
 
 ```console
 python run_autofx.py after-effects "renders/result_assets/HASH/after_effects.json" --exe "C:/Program Files/Adobe/Adobe After Effects 2025/Support Files/AfterFX.exe" --project "renders/native.aep"

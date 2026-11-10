@@ -15,7 +15,7 @@ import wave
 from . import __version__
 from .assets import cube, sfx
 from .media import (FXError, Runner, absolute_path, decode_check, ffmpeg, inspect, read_json,
-                    sha256, temporary_directory, verify_identity, write_json)
+                    publish_file, sha256, temporary_directory, verify_identity, write_json)
 from .plan import integer, number, validate
 
 LOG = logging.getLogger(__name__)
@@ -67,10 +67,20 @@ def output_lock(output: Path):
 
 
 def verify_wav(path: Path, samples: int) -> None:
-    with wave.open(str(path), "rb") as stream:
-        if (stream.getnframes() != samples or stream.getframerate() != RATE
-                or stream.getnchannels() != 2 or stream.getsampwidth() != 2):
-            raise FXError(f"PCM audio validation failed: {path}")
+    try:
+        with wave.open(str(path), "rb") as stream:
+            if (stream.getnframes() != samples or stream.getframerate() != RATE
+                    or stream.getnchannels() != 2 or stream.getsampwidth() != 2
+                    or stream.getcomptype() != "NONE"):
+                raise FXError(f"PCM audio validation failed: {path}")
+            remaining = samples
+            while remaining:
+                block = stream.readframes(min(remaining, 65536))
+                if not block or len(block) % 4:
+                    raise FXError(f"Truncated PCM payload: {path}")
+                remaining -= len(block) // 4
+    except (wave.Error, EOFError) as exc:
+        raise FXError(f"Invalid WAV container: {path}: {exc}") from exc
 
 
 def video_ok(path: Path, plan: dict, count: int) -> bool:
@@ -83,11 +93,13 @@ def video_filter(plan: dict, clip: dict) -> str:
     width, height, fps = plan["width"], plan["height"], plan["fps"]
     result = f"setpts=(PTS-STARTPTS)/{clip['speed']:.12f},fps={fps},"
     if plan["fit"] == "cover":
-        result += (f"scale={width}:{height}:force_original_aspect_ratio=increase,"
-                   f"crop={width}:{height},")
+        result += (f"scale=w='if(gte(dar,{width}/{height}),ceil({height}*dar/2)*2,{width})':"
+                   f"h='if(gte(dar,{width}/{height}),{height},ceil({width}/dar/2)*2)',"
+                   f"setsar=1,crop={width}:{height},")
     else:
-        result += (f"scale={width}:{height}:force_original_aspect_ratio=decrease,"
-                   f"pad={width}:{height}:(ow-iw)/2:(oh-ih)/2:black,")
+        result += (f"scale=w='if(gte(dar,{width}/{height}),{width},max(2,floor({height}*dar/2)*2))':"
+                   f"h='if(gte(dar,{width}/{height}),max(2,floor({width}/dar/2)*2),{height})',"
+                   f"setsar=1,pad={width}:{height}:(ow-iw)/2:(oh-ih)/2:black,")
     result += "setsar=1,"
     if clip["zoom"]:
         result += (f"zoompan=z='1+{clip['zoom']}*on/{max(1, clip['frames'] - 1)}':"
@@ -144,6 +156,9 @@ def render(plan: dict, output: Path, *, jobs: int = 2, encoder: str = "cpu",
                     if old["video_sha256"] == sha256(video) and old["audio_sha256"] == sha256(audio):
                         verify_wav(audio, count)
                         if video_ok(video, plan, clip["frames"]):
+                            if verify_decode and not old.get("decode_verified", False):
+                                decode_check(video, runner)
+                                write_json(marker, dict(old, decode_verified=True))
                             LOG.info("Cache %d/%d", index + 1, len(plan["clips"]))
                             return video, audio
                 except (OSError, ValueError, KeyError, FXError, wave.Error):
@@ -177,7 +192,8 @@ def render(plan: dict, output: Path, *, jobs: int = 2, encoder: str = "cpu",
                 decode_check(temporary_video, runner)
             temporary_video.replace(video)
             temporary_audio.replace(audio)
-            write_json(marker, {"video_sha256": sha256(video), "audio_sha256": sha256(audio)})
+            write_json(marker, {"video_sha256": sha256(video), "audio_sha256": sha256(audio),
+                                "decode_verified": verify_decode})
             LOG.info("Rendered %d/%d", index + 1, len(plan["clips"]))
             return video, audio
 
@@ -222,15 +238,12 @@ def render(plan: dict, output: Path, *, jobs: int = 2, encoder: str = "cpu",
                 raise FXError("Master failed frame/dimension validation")
             if verify_decode:
                 decode_check(staged, runner)
+            # Prepare handoff before replacing a previously valid master.
+            from .handoff import export
+            handoff = export(plan, [result[0] for result in results], folder, output)
             for record in records:
-                stat = Path(record["path"]).stat()
-                if (stat.st_size, stat.st_mtime_ns) != (record["size"], record["mtime_ns"]):
-                    raise FXError("Source changed during rendering; rerun with a fresh plan")
-            if output.exists() and not overwrite:
-                raise FXError("Output appeared during render; choose another filename")
-            staged.replace(output)
-        from .handoff import export
-        handoff = export(plan, [result[0] for result in results], folder, output)
+                verify_identity(record)
+            publish_file(staged, output, overwrite=overwrite)
         report = {"version": __version__, "master": str(output), "assets": str(folder),
                   "frames": plan["frames"], "duration": plan["frames"] / fps,
                   "encoder": encoder, "jobs": jobs, "clips": len(results),
