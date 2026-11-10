@@ -1,11 +1,11 @@
 {
   "success": true,
-  "tests_run": 26,
+  "tests_run": 28,
   "failures": 0,
   "errors": 0,
   "skipped": [],
   "integration_requested": true,
-  "elapsed_seconds": 14.125,
+  "elapsed_seconds": 13.187,
   "python": "3.11.9",
   "platform": "Windows-10-10.0.26100-SP0",
   "native_applications_verified": false,

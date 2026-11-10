@@ -1,5 +1,7 @@
 # 0.2.0
 
+- Name the source launcher `run_autofx.py` so it does not mask the installed `autofx` package; cover editable-style import lookup in subprocess regression tests.
+
 - Validate saved JSON plans explicitly, including NaN/Infinity, booleans used as numbers, large integers, source boundaries, gaps and overlaps.
 - Track full media hashes and include music identity in render state.
 - Normalize video to an integer-frame timeline and handle source/output frame-rate differences.

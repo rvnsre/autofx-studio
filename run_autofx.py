@@ -1,4 +1,4 @@
-"""Run the source checkout without installing the CLI entry point."""
+"""Source launcher; its filename intentionally does not shadow the autofx package."""
 from pathlib import Path
 import sys
 

@@ -6,7 +6,7 @@ Tarix: 10 noyabr 2026.
 
 - Python mənbələrinin compile yoxlaması: keçdi.
 - CLI giriş nöqtəsi və `doctor`: keçdi.
-- 26 unittest: keçdi; 0 xəta, 0 uğursuz test, 0 buraxılmış test.
+- 28 unittest: keçdi; 0 xəta, 0 uğursuz test, 0 buraxılmış test.
 - Sintetik video ilə real FFmpeg inteqrasiya testləri: keçdi.
 - Audio və səssiz mənbələrin qarışdırılması: keçdi.
 - 24, 25, 30, 50 və 60 FPS çıxışlar: keçdi.
@@ -32,11 +32,11 @@ Maşın tərəfindən oxunan nəticə: `validation.json`.
 - OpenCV 5.0.0.
 - NumPy 2.4.6.
 - FFmpeg 7.1 essentials build.
-- İnteqrasiya testlərinin ümumi müddəti təxminən 14.1 saniyə idi; bu, render sürəti üçün universal benchmark deyil.
+- Son test dəstinin ümumi müddəti təxminən 13.2 saniyə idi; bu, render sürəti üçün universal benchmark deyil.
 
 ## Bu sessiyada yoxlanılmayan hissələr
 
-- Linux və macOS hostlarında faktiki icra. CI konfiqurasiyası hazırlanıb, uzaqda işə salınmayıb.
+- Bu lokal hesabat Linux/macOS nəticələrini təsdiqləmir. Üç platforma və iki Python versiyasının uzaq nəticələri ayrıca [GitHub Actions](https://github.com/rvnsre/autofx-studio/actions)-da izlənir.
 - Quraşdırılmış Resolve/Premiere/After Effects-də real import və native render. Native adapter testləri mock-lardır.
 - NVENC/QSV/AMF/VideoToolbox avadanlıq sürətləndirilməsi.
 - Bütün codec-lər, kamera formatları və professional rəng iş axınları.

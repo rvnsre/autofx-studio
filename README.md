@@ -42,14 +42,14 @@ Windows PowerShell:
 
 ```powershell
 .venv\Scripts\python.exe -m pip install -e .
-.venv\Scripts\python.exe autofx.py doctor
+.venv\Scripts\python.exe run_autofx.py doctor
 ```
 
 Linux/macOS:
 
 ```sh
 .venv/bin/python -m pip install -e .
-.venv/bin/python autofx.py doctor
+.venv/bin/python run_autofx.py doctor
 ```
 
 Aktivləşdirilmiş virtual mühitdə aşağıdakı nümunələrdəki `python` və quraşdırılmış `autofx` əmri eyni funksiyanı yerinə yetirir. Python paketinin gətirdiyi FFmpeg istifadə edilə bilər; ayrıca ffprobe tələb edilmir. Alternativ olaraq FFmpeg-i sistem PATH-ına əlavə edin. Başqa binary seçmək üçün `AUTOFX_FFMPEG` dəyişənini həmin executable-ın tam yoluna təyin edin.
@@ -57,13 +57,13 @@ Aktivləşdirilmiş virtual mühitdə aşağıdakı nümunələrdəki `python` v
 ## Bir əmrlə render
 
 ```console
-python autofx.py auto "video1.mp4" "video2.mp4" -o "renders/result.mp4" --preset hype --duration 15 --width 1080 --height 1920 --jobs 2
+python run_autofx.py auto "video1.mp4" "video2.mp4" -o "renders/result.mp4" --preset hype --duration 15 --width 1080 --height 1920 --jobs 2
 ```
 
 Musiqi və bütün təsviri kəsmədən yerləşdirmək:
 
 ```console
-python autofx.py auto "video.mp4" -o "renders/music.mp4" --music "music.wav" --fit contain --preset cinematic
+python run_autofx.py auto "video.mp4" -o "renders/music.mp4" --music "music.wav" --fit contain --preset cinematic
 ```
 
 `cover` kadrı doldurmaq üçün kənarları kəsir. `contain` təsviri bütöv saxlayıb boş hissələri qara ilə doldurur. HDR/PQ/HLG mənbələr avtomatik SDR kimi rənglənmir: əvvəlcə ayrıca düzgün rəng idarəsi ilə SDR-ə çevirin. Yaradılan LUT Rec.709/display-referred yaradıcı görünüşdür; kamera LOG transformu deyil.
@@ -71,8 +71,8 @@ python autofx.py auto "video.mp4" -o "renders/music.mp4" --music "music.wav" --f
 ## Planı redaktə etmək və davam etmək
 
 ```console
-python autofx.py plan "video.mp4" -o "edit.json" --duration 12 --no-analyze
-python autofx.py render "edit.json" -o "renders/edit.mp4"
+python run_autofx.py plan "video.mp4" -o "edit.json" --duration 12 --no-analyze
+python run_autofx.py render "edit.json" -o "renders/edit.mp4"
 ```
 
 JSON daxilində `clips` siyahısındakı `in`, `speed`, `zoom`, `flash` dəyişilə bilər. `timeline_frame` və `frames` kəsimsiz, üst-üstə düşməyən timeline təşkil etməlidir. Köhnə 0.1 planları dəstəklənmir; schema 2 planını yenidən yaradın.
@@ -109,8 +109,8 @@ XML/AE-də video klipləri ayrıdır, effektlər həmin kliplərə tətbiq olunu
 Resolve-u başladın və quraşdırılmış nəşrin xarici scripting dəstəyini hazırlayın. Lazım gələrsə `RESOLVE_SCRIPT_API` və `RESOLVE_SCRIPT_LIB` dəyişənlərini vendor README-sinə uyğun qurun.
 
 ```console
-python autofx.py resolve "renders/result_assets/HASH/timeline.xml"
-python autofx.py resolve "renders/result_assets/HASH/timeline.xml" --render-dir "native-render" --render-preset "MyInstalledPreset"
+python run_autofx.py resolve "renders/result_assets/HASH/timeline.xml"
+python run_autofx.py resolve "renders/result_assets/HASH/timeline.xml" --render-dir "native-render" --render-preset "MyInstalledPreset"
 ```
 
 Yeni unikal layihə yaradılır. Native rendering üçün mövcud render presetinin dəqiq adı lazımdır. Komanda lisenziya və tətbiqdə icazə parametrlərini dəyişmir.
@@ -120,13 +120,13 @@ Yeni unikal layihə yaradılır. Native rendering üçün mövcud render preseti
 AE-də boş layihə açın. Fayla yazmağa icazə verən scripting ayarları quraşdırılmış tətbiqdə hazır olmalıdır. Məsələn Windows-da öz versiyanızın executable yolunu göstərin:
 
 ```console
-python autofx.py after-effects "renders/result_assets/HASH/after_effects.json" --exe "C:/Program Files/Adobe/Adobe After Effects 2025/Support Files/AfterFX.exe" --project "renders/native.aep"
+python run_autofx.py after-effects "renders/result_assets/HASH/after_effects.json" --exe "C:/Program Files/Adobe/Adobe After Effects 2025/Support Files/AfterFX.exe" --project "renders/native.aep"
 ```
 
 macOS-da `--exe` tətbiqin `.app/Contents/MacOS/` daxilindəki uyğun executable yoludur. Mövcud media olan AE layihəsinə toxunmaqdan imtina edilir. Mövcud `.aep` əvəz edilmir. Launcher-in çıxmasını gözləmək əvəzinə skriptin nəticə bildirişi izlənir.
 
 ```console
-python autofx.py aerender "renders/native.aep" --exe "/your/path/to/aerender" -o "renders/native.mov" --template "Your installed output module template"
+python run_autofx.py aerender "renders/native.aep" --exe "/your/path/to/aerender" -o "renders/native.mov" --template "Your installed output module template"
 ```
 
 Template adı AE quraşdırılmasına və dilinə uyğun olmalıdır. Çıxış formatı/uzantısı həmin template-lə uyğun seçilməlidir. Native tətbiqlər və adapterlər üçün ayrıca quraşdırılmış proqram/lisenziya tələb olunur.
